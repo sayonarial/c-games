@@ -6,6 +6,7 @@
 using namespace std;
 #include <string>
 #include <Windows.h>
+#include <time.h>       /* time */
 
 const char Border_char = '#';
 
@@ -19,15 +20,44 @@ short apple_x;
 short apple_y;
 const char AppleChar = 'Q';
 int score = 0;
+int mode = 0;
+const int Levels = 3;
+const string Level_list[Levels] = {"Easy", "Colored", "Imposibble"};
 
 #define UP_KEY 72
 #define DOWN_KEY 80
 #define LEFT_KEY 75
 #define RIGHT_KEY 77
+#define ENTER_KEY 'o'
 
 void generate_new_apple() {
-    apple_x = rand() % areaWidth;
-    apple_y = rand() % areaHeight;
+
+    switch (mode)
+    {
+    case 0://normal mode
+        srand(time(NULL));
+        apple_x = rand() % areaWidth;
+        srand(time(NULL));
+        apple_y = rand() % areaHeight;
+        break;
+    case 1: //harder mode
+        srand(time(NULL));
+        apple_x = rand() % areaWidth;
+        srand(time(NULL));
+        apple_y = rand() % areaHeight;
+        if (score % 5 > 1 && score > 1) {
+            HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+            srand(time(NULL));
+            SetConsoleTextAttribute(hConsole, rand() % 256);
+        }
+        break;
+    case 2: // Imposible 
+        apple_x = areaWidth + 5;
+        apple_y = areaHeight/2;
+        break;
+
+    }
+    
 }
 
 void ClearScreen()
@@ -55,6 +85,14 @@ void show_frame() {
             else output_string += ' ';
         }
         output_string += Border_char;
+        if (mode == 2 && apple_y == i) {
+            for (int b = 0; b < apple_x - areaWidth; b++)
+            {
+                output_string += ' ';
+            }
+            output_string += AppleChar;
+        }
+        
         output_string += '\n';
     }
     for (int i = 0; i < areaWidth + 2; i++) {
@@ -75,34 +113,48 @@ void get_input() {
     if (direction_key == DOWN_KEY && dog_y != areaHeight - 1) { dog_y++; }
     if (direction_key == LEFT_KEY && dog_x != 0) { dog_x--; }
     if (direction_key == RIGHT_KEY && dog_x != areaWidth - 1) { dog_x++; }
-
+    
     if (dog_x == apple_x && dog_y == apple_y) {
-        generate_new_apple();
         score++;
+        generate_new_apple();
     }
 }
 
+int menu() {
+    int cursor = 0;
+    while (true)
+    {
+        cout << "Choose your mode:\n";
+        for (int i = 0; i < Levels; i++) {
+            if (cursor == i) {
+                cout << '>';
+            }
+            else {
+                cout << ' ';
+            }
+            cout << i + 1 << ". " << Level_list[i] << '\n';
+        }
 
+        int direction_key = _getch();
+        if (direction_key == UP_KEY && cursor > 0) { cursor--; }
+        else if (direction_key == DOWN_KEY && cursor < Levels-1) { cursor++; }
+        else if (direction_key == ENTER_KEY) {  return cursor; }
+        //clear console
+        ClearScreen();
+
+        
+    }
+
+}
 
 int main()
 {
+    mode = menu();
     generate_new_apple();
     while (true) {
-        get_input();
         show_frame();
+        get_input();
     }
     
     return 0;
 }
-
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
